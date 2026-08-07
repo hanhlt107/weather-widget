@@ -21,9 +21,9 @@ export const DEFAULTS = {
 };
 
 export const LAYOUT = {
-  cardWidth: 62,
+  cardWidth: 70,
   cardGap: 2,
-  padding: 14,
+  padding: 19,
   hourlyPanelHeight: 100,
   dailyPanelHeight: 114,
   maxCityLength: 40,
@@ -58,14 +58,10 @@ export const UNITS = ["celsius", "fahrenheit"];
 
 export const PALETTES = {
   light: {
-    bg1: "#cfe4fb",
-    bg2: "#e8f1fd",
     text: "#0f2a54",
     muted: "rgba(15,42,84,.58)",
-    panel: "rgba(255,255,255,.55)",
-    card: "rgba(255,255,255,.82)",
-    cloud: "#ffffff",
-    cloudLine: "rgba(15,42,84,.18)",
+    cloud: "#f2f6fb",
+    cloudLine: "rgba(15,42,84,.28)",
     rain: "#4b9bea",
     sun: "#f7b731",
     snow: "#9fd0f5",
@@ -74,12 +70,8 @@ export const PALETTES = {
     pinBorder: "rgba(226,59,59,.35)",
   },
   dark: {
-    bg1: "#16294a",
-    bg2: "#24406d",
     text: "#eaf2ff",
     muted: "rgba(234,242,255,.62)",
-    panel: "rgba(255,255,255,.08)",
-    card: "rgba(255,255,255,.14)",
     cloud: "#dfe9f7",
     cloudLine: "rgba(255,255,255,.22)",
     rain: "#7cc0ff",

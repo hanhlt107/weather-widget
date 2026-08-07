@@ -91,23 +91,20 @@ function icon(code, isDay, cx, cy) {
 }
 
 function card(x, y, label, sub, code, isDay, pop, temp, highlight) {
-  const cx = x + CARD_W / 2;
   const wet = pop != null && pop >= 30;
-  const boxH = sub ? 106 : 92;
 
   return `<g>
-    ${highlight ? `<rect x="${x}" y="${y - 6}" width="${CARD_W}" height="${boxH}" rx="10" fill="var(--card)"/>` : ''}
-    <text x="${cx}" y="${y + 18}" class="lbl${highlight ? ' strong' : ''}">${escapeXml(label)}</text>
-    ${sub ? `<text x="${cx}" y="${y + 32}" class="sub">${escapeXml(sub)}</text>` : ''}
-    ${icon(code, isDay, cx, y + (sub ? 55 : 48))}
-    <text x="${cx}" y="${y + (sub ? 84 : 78)}" class="temp">${temp}°</text>
-    <text x="${cx}" y="${y + (sub ? 99 : 93)}" class="pop${wet ? ' wet' : ''}">${pop != null && pop > 0 ? pop + '%' : ''}</text>
+    <text x="${x}" y="${y + 18}" class="lbl${highlight ? ' strong' : ''}">${escapeXml(label)}</text>
+    ${sub ? `<text x="${x}" y="${y + 32}" class="sub">${escapeXml(sub)}</text>` : ''}
+    ${icon(code, isDay, x + 12, y + (sub ? 55 : 48))}
+    <text x="${x}" y="${y + (sub ? 84 : 78)}" class="temp">${temp}°</text>
+    <text x="${x}" y="${y + (sub ? 99 : 93)}" class="pop${wet ? ' wet' : ''}">${pop != null && pop > 0 ? pop + '%' : ''}</text>
   </g>`;
 }
 
 function pin(x, y) {
   return `<g transform="translate(${x} ${y})">
-    <circle cx="0" cy="0" r="11" fill="var(--card)" stroke="var(--pin-line)" stroke-width="1"/>
+    <circle cx="0" cy="0" r="11" fill="none" stroke="var(--pin-line)" stroke-width="1"/>
     <g transform="translate(-6 -6.5)" fill="none" stroke="var(--pin)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
       <path d="M6 12.4s3.9-3.4 3.9-6.1a3.9 3.9 0 1 0-7.8 0c0 2.7 3.9 6.1 3.9 6.1z"/>
       <circle cx="6" cy="5.9" r="1.45"/>
@@ -117,7 +114,6 @@ function pin(x, y) {
 
 function section(title, y, cards, showPin) {
   return `<text x="${PAD}" y="${y}" class="title">${escapeXml(title)}</text>
-    <rect x="${PAD}" y="${y + 10}" width="${cards.width}" height="${cards.height}" rx="12" fill="var(--panel)"/>
     ${showPin ? pin(PAD + cards.width - 16, y - 5) : ''}
     ${cards.body}`;
 }
@@ -133,7 +129,7 @@ function buildHourly(data, originY) {
     if (idx >= data.hourly.time.length) break;
 
     const t = parseLocalTime(data.hourly.time[idx]);
-    const x = PAD + 6 + i * (CARD_W + GAP);
+    const x = PAD + i * (CARD_W + GAP);
     body += card(
       x, originY + 16,
       i === 0 ? TEXT.now : pad2(t.hour) + ':' + pad2(t.minute),
@@ -146,14 +142,14 @@ function buildHourly(data, originY) {
     );
   }
 
-  return { body, width: HOURS * (CARD_W + GAP) - GAP + 12, height: LAYOUT.hourlyPanelHeight };
+  return { body, width: HOURS * (CARD_W + GAP) - GAP, height: LAYOUT.hourlyPanelHeight };
 }
 
 function buildDaily(data, originY) {
   let body = '';
   for (let i = 0; i < DAYS && i < data.daily.time.length; i++) {
     const t = parseLocalTime(data.daily.time[i] + 'T00:00');
-    const x = PAD + 6 + i * (CARD_W + GAP);
+    const x = PAD + i * (CARD_W + GAP);
     body += card(
       x, originY + 16,
       i === 0 ? TEXT.today : WEEKDAYS[weekdayOf(t.year, t.month, t.day)],
@@ -166,7 +162,7 @@ function buildDaily(data, originY) {
     );
   }
 
-  return { body, width: DAYS * (CARD_W + GAP) - GAP + 12, height: LAYOUT.dailyPanelHeight };
+  return { body, width: DAYS * (CARD_W + GAP) - GAP, height: LAYOUT.dailyPanelHeight };
 }
 
 function render(data, opts) {
@@ -199,7 +195,7 @@ function render(data, opts) {
 
   const palette = night ? PALETTES.dark : PALETTES.light;
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="Dự báo thời tiết ${escapeXml(city)}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block;max-width:${w}px" role="img" aria-label="Dự báo thời tiết ${escapeXml(city)}">
   <style>
     svg {
       --sun: ${palette.sun};
@@ -207,28 +203,19 @@ function render(data, opts) {
       --cloud: ${palette.cloud};
       --cloud-line: ${palette.cloudLine};
       --rain: ${palette.rain};
-      --panel: ${palette.panel};
-      --card: ${palette.card};
       --pin: ${palette.pin};
       --pin-line: ${palette.pinBorder};
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     }
     text { fill: ${palette.text}; }
     .title { font-size: 12px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; fill: ${palette.muted}; }
-    .lbl { font-size: 11.5px; text-anchor: middle; fill: ${palette.muted}; }
+    .lbl { font-size: 11.5px; fill: ${palette.muted}; }
     .lbl.strong { font-size: 12px; font-weight: 600; fill: ${palette.text}; }
-    .sub { font-size: 10px; text-anchor: middle; fill: ${palette.muted}; }
-    .temp { font-size: 14px; font-weight: 600; text-anchor: middle; }
-    .pop { font-size: 11px; text-anchor: middle; fill: transparent; }
+    .sub { font-size: 10px; fill: ${palette.muted}; }
+    .temp { font-size: 14px; font-weight: 600; }
+    .pop { font-size: 11px; fill: transparent; }
     .pop.wet { fill: ${palette.rain}; font-weight: 600; }
   </style>
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0.6" y2="1">
-      <stop offset="0" stop-color="${palette.bg1}"/>
-      <stop offset="1" stop-color="${palette.bg2}"/>
-    </linearGradient>
-  </defs>
-  <rect width="${w}" height="${h}" rx="18" fill="url(#bg)"/>
   ${body}
 </svg>`;
 }
