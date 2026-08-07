@@ -1,6 +1,6 @@
 import {
   DEFAULTS, LAYOUT, CACHE, TEXT, PALETTES,
-  resolveOptions, forecastUrl
+  resolveOptions, resolvePalette, forecastUrl
 } from './config.js';
 
 const WEEKDAYS = TEXT.weekdays;
@@ -166,7 +166,7 @@ function buildDaily(data, originY) {
 }
 
 function render(data, opts) {
-  const { view, city, theme } = opts;
+  const { view, city, theme, colors } = opts;
   const showHourly = view === 'all' || view === '1d';
   const showDaily = view === 'all' || view === '7d';
 
@@ -193,9 +193,9 @@ function render(data, opts) {
   const isDay = data.current.is_day === 1;
   const night = theme === 'dark' || (theme === 'auto' && !isDay);
 
-  const palette = night ? PALETTES.dark : PALETTES.light;
+  const palette = resolvePalette(colors, night ? PALETTES.dark : PALETTES.light);
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block;max-width:${w}px" role="img" aria-label="Dự báo thời tiết ${escapeXml(city)}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block;max-width:${w}px" role="img" aria-label="Dự báo thời tiết ${escapeXml(city)}">
   <style>
     svg {
       --sun: ${palette.sun};
@@ -230,7 +230,7 @@ export default async function handler(req, res) {
     const data = await upstream.json();
     if (data.error) throw new Error(data.reason || TEXT.upstreamError);
 
-    const svg = render(data, { view, city: location.name, theme });
+    const svg = render(data, { view, city: location.name, theme, colors: req.query || {} });
 
     res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
     res.setHeader(
@@ -243,7 +243,7 @@ export default async function handler(req, res) {
     res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache');
     return res.status(200).send(
-      `<svg xmlns="http://www.w3.org/2000/svg" width="420" height="56" viewBox="0 0 420 56">
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 56" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block;max-width:420px">
         <rect width="420" height="56" rx="12" fill="#fdecea"/>
         <text x="16" y="33" font-family="-apple-system, Segoe UI, Arial, sans-serif" font-size="13" fill="#b3261e">${message}</text>
       </svg>`

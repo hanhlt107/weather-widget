@@ -87,6 +87,37 @@ export function pick(value, allowed, fallback) {
   return allowed.includes(value) ? value : fallback;
 }
 
+const HEX_COLOR_PATTERN = /^[0-9a-fA-F]{6}$|^[0-9a-fA-F]{3}$/;
+
+export function validateHexColor(color, fallback) {
+  const raw = String(color || "").replace(/^#/, "");
+  return HEX_COLOR_PATTERN.test(raw) ? "#" + raw.toLowerCase() : fallback;
+}
+
+export const COLOR_PARAMS = {
+  text_color: "text",
+  muted_color: "muted",
+  cloud_color: "cloud",
+  cloud_line_color: "cloudLine",
+  rain_color: "rain",
+  sun_color: "sun",
+  snow_color: "snow",
+  pin_color: "pin",
+  pin_border_color: "pinBorder",
+};
+
+export function resolvePalette(query = {}, base) {
+  const palette = { ...base };
+
+  for (const [param, key] of Object.entries(COLOR_PARAMS)) {
+    if (query[param] === undefined) continue;
+    const value = validateHexColor(query[param], null);
+    if (value) palette[key] = value;
+  }
+
+  return palette;
+}
+
 export function resolveLocation(query = {}) {
   const preset = LOCATIONS[String(query.location || "").toLowerCase()];
   const base = preset || LOCATIONS[DEFAULTS.location];
