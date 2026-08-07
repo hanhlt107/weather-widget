@@ -18,6 +18,8 @@ export const DEFAULTS = {
   forecastDays: 7,
   hours: 12,
   days: 7,
+  hideTitle: false,
+  hidePin: false,
 };
 
 export const LAYOUT = {
@@ -87,6 +89,13 @@ export function pick(value, allowed, fallback) {
   return allowed.includes(value) ? value : fallback;
 }
 
+const TRUTHY = ["true", "1", "yes"];
+
+export function validateBool(value, fallback = false) {
+  if (value === undefined || value === "") return fallback;
+  return TRUTHY.includes(String(value).toLowerCase());
+}
+
 const HEX_COLOR_PATTERN = /^[0-9a-fA-F]{6}$|^[0-9a-fA-F]{3}$/;
 
 export function validateHexColor(color, fallback) {
@@ -140,6 +149,8 @@ export function resolveOptions(query = {}) {
     view: pick(query.view, VIEWS, DEFAULTS.view),
     theme: pick(query.theme, THEMES, DEFAULTS.theme),
     unit: pick(query.unit, UNITS, DEFAULTS.unit),
+    hideTitle: validateBool(query.hide_title, DEFAULTS.hideTitle),
+    hidePin: validateBool(query.hide_pin, DEFAULTS.hidePin),
   };
 }
 

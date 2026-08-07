@@ -112,9 +112,10 @@ function pin(x, y) {
   </g>`;
 }
 
-function section(title, y, cards, showPin) {
-  return `<text x="${PAD}" y="${y}" class="title">${escapeXml(title)}</text>
-    ${showPin ? pin(PAD + cards.width - 16, y - 5) : ''}
+function section(title, y, cards, showPin, showTitle) {
+  const pinY = showTitle ? y - 5 : y + 12;
+  return `${showTitle ? `<text x="${PAD}" y="${y}" class="title">${escapeXml(title)}</text>` : ''}
+    ${showPin ? pin(PAD + cards.width - 16, pinY) : ''}
     ${cards.body}`;
 }
 
@@ -166,24 +167,26 @@ function buildDaily(data, originY) {
 }
 
 function render(data, opts) {
-  const { view, city, theme, colors } = opts;
+  const { view, city, theme, colors, hideTitle, hidePin } = opts;
   const showHourly = view === 'all' || view === '1d';
   const showDaily = view === 'all' || view === '7d';
+  const showTitle = !hideTitle;
+  const titleSpace = showTitle ? 0 : 18;
 
-  let y = 26;
+  let y = 26 - titleSpace;
   let body = '';
   let width = 0;
 
   if (showHourly) {
     const cards = buildHourly(data, y);
-    body += section(TEXT.hourlyTitle(city), y, cards, true);
+    body += section(TEXT.hourlyTitle(city), y, cards, !hidePin, showTitle);
     width = Math.max(width, cards.width);
-    y += cards.height + 44;
+    y += cards.height + 44 - titleSpace;
   }
 
   if (showDaily) {
     const cards = buildDaily(data, y);
-    body += section(TEXT.dailyTitle(city), y, cards, !showHourly);
+    body += section(TEXT.dailyTitle(city), y, cards, !hidePin && !showHourly, showTitle);
     width = Math.max(width, cards.width);
     y += cards.height + 26;
   }
@@ -221,7 +224,7 @@ function render(data, opts) {
 }
 
 export default async function handler(req, res) {
-  const { location, view, theme, unit } = resolveOptions(req.query || {});
+  const { location, view, theme, unit, hideTitle, hidePin } = resolveOptions(req.query || {});
 
   try {
     const upstream = await fetch(forecastUrl(location, unit));
@@ -230,7 +233,9 @@ export default async function handler(req, res) {
     const data = await upstream.json();
     if (data.error) throw new Error(data.reason || TEXT.upstreamError);
 
-    const svg = render(data, { view, city: location.name, theme, colors: req.query || {} });
+    const svg = render(data, {
+      view, city: location.name, theme, colors: req.query || {}, hideTitle, hidePin
+    });
 
     res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
     res.setHeader(
