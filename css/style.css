@@ -286,7 +286,7 @@ a { color: var(--ww-accent); }
 
 .ww-daily {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(var(--ww-days, 7), 1fr);
   gap: 2px;
 }
 

@@ -28,10 +28,10 @@ Rồi mở http://localhost:8000
 Deploy lên Vercel ([vercel.com/new](https://vercel.com/new) → import repo → Deploy, không cần biến môi trường), rồi dán:
 
 ```markdown
-<img src="https://TÊN-PROJECT.vercel.app/api/weather?view=all" alt="Thời tiết Hà Nội" />
+<img src="https://weather-widget-ebon.vercel.app/api/weather?view=all" alt="Thời tiết Hà Nội" />
 ```
 
-Đổi `TÊN-PROJECT` thành domain Vercel cấp cho bạn.
+Nếu bạn fork repo này, đổi `weather-widget-ebon` thành domain Vercel cấp cho bạn.
 
 ### Tham số
 
@@ -45,8 +45,8 @@ Deploy lên Vercel ([vercel.com/new](https://vercel.com/new) → import repo →
 | `unit` | `celsius` \| `fahrenheit` | `celsius` | Đơn vị nhiệt độ |
 
 ```markdown
-<img src="https://TÊN-PROJECT.vercel.app/api/weather?view=7d&theme=dark" />
-<img src="https://TÊN-PROJECT.vercel.app/api/weather?view=7d&city=Tokyo&lat=35.68&lon=139.69" />
+<img src="https://weather-widget-ebon.vercel.app/api/weather?view=7d&theme=dark" />
+<img src="https://weather-widget-ebon.vercel.app/api/weather?view=7d&city=Tokyo&lat=35.68&lon=139.69" />
 ```
 
 SVG cache 15 phút ở CDN. GitHub proxy ảnh qua Camo và cache khá lâu — khi test, thêm tham số vô nghĩa (`&v=2`) để ép làm mới.

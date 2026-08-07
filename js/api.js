@@ -55,7 +55,7 @@
         current: CONFIG.API.current,
         hourly: CONFIG.API.hourly,
         daily: CONFIG.API.daily,
-        temperature_unit: unit === 'fahrenheit' ? 'fahrenheit' : CONFIG.DEFAULTS.unit,
+        temperature_unit: unit === 'fahrenheit' ? 'fahrenheit' : 'celsius',
         timezone: timezone || CONFIG.DEFAULTS.timezone,
         forecast_days: CONFIG.DEFAULTS.forecastDays
       });

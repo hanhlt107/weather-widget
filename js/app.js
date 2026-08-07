@@ -5,6 +5,9 @@
   var TEXT = CONFIG.TEXT;
 
   var LOCATION = CONFIG.location();
+  var VIEW = CONFIG.view();
+  var SHOW_HOURLY = VIEW === 'all' || VIEW === '1d';
+  var SHOW_DAILY = VIEW === 'all' || VIEW === '7d';
   var REFRESH_AFTER_MS = CONFIG.DEFAULTS.refreshAfterMs;
   var WEEKDAYS = TEXT.weekdays;
 
@@ -23,7 +26,7 @@
       'hourly-title', 'daily-title',
       'hourly', 'daily',
       'hourly-prev', 'hourly-next',
-      'picker-open'
+      'picker-open', 'section-hourly', 'section-daily', 'daily-head'
     ].forEach(function (id) {
       el[id] = document.getElementById(id);
     });
@@ -123,7 +126,8 @@
     var daily = data.daily;
 
     var html = '';
-    for (var i = 0; i < daily.time.length; i++) {
+    var days = Math.min(CONFIG.DEFAULTS.forecastDays, daily.time.length);
+    for (var i = 0; i < days; i++) {
       var max = daily.temperature_2m_max[i];
       var pop = daily.precipitation_probability_max[i];
 
@@ -184,7 +188,7 @@
     var id = ++state.requestId;
     el['widget'].classList.add('is-loading');
 
-    return WeatherAPI.getForecast(LOCATION.latitude, LOCATION.longitude, CONFIG.DEFAULTS.unit)
+    return WeatherAPI.getForecast(LOCATION.latitude, LOCATION.longitude, CONFIG.unit())
       .then(function (data) {
         if (id !== state.requestId) return;
         state.data = data;
@@ -223,8 +227,21 @@
     });
   }
 
+  function applyConfig() {
+    document.documentElement.setAttribute('data-theme', CONFIG.theme());
+    el['daily'].style.setProperty('--ww-days', CONFIG.DEFAULTS.forecastDays);
+
+    el['section-hourly'].hidden = !SHOW_HOURLY;
+    el['section-daily'].hidden = !SHOW_DAILY;
+
+    if (!SHOW_HOURLY) {
+      el['daily-head'].appendChild(el['picker-open']);
+    }
+  }
+
   function init() {
     cacheDom();
+    applyConfig();
     bindEvents();
     load();
   }

@@ -105,9 +105,20 @@ function card(x, y, label, sub, code, isDay, pop, temp, highlight) {
   </g>`;
 }
 
-function section(title, y, cards) {
+function pin(x, y) {
+  return `<g transform="translate(${x} ${y})">
+    <circle cx="0" cy="0" r="11" fill="var(--card)" stroke="var(--pin-line)" stroke-width="1"/>
+    <g transform="translate(-6 -6.5)" fill="none" stroke="var(--pin)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 12.4s3.9-3.4 3.9-6.1a3.9 3.9 0 1 0-7.8 0c0 2.7 3.9 6.1 3.9 6.1z"/>
+      <circle cx="6" cy="5.9" r="1.45"/>
+    </g>
+  </g>`;
+}
+
+function section(title, y, cards, showPin) {
   return `<text x="${PAD}" y="${y}" class="title">${escapeXml(title)}</text>
     <rect x="${PAD}" y="${y + 10}" width="${cards.width}" height="${cards.height}" rx="12" fill="var(--panel)"/>
+    ${showPin ? pin(PAD + cards.width - 16, y - 5) : ''}
     ${cards.body}`;
 }
 
@@ -169,14 +180,14 @@ function render(data, opts) {
 
   if (showHourly) {
     const cards = buildHourly(data, y);
-    body += section(TEXT.hourlyTitle(city), y, cards);
+    body += section(TEXT.hourlyTitle(city), y, cards, true);
     width = Math.max(width, cards.width);
     y += cards.height + 44;
   }
 
   if (showDaily) {
     const cards = buildDaily(data, y);
-    body += section(TEXT.dailyTitle(city), y, cards);
+    body += section(TEXT.dailyTitle(city), y, cards, !showHourly);
     width = Math.max(width, cards.width);
     y += cards.height + 26;
   }
@@ -198,6 +209,8 @@ function render(data, opts) {
       --rain: ${palette.rain};
       --panel: ${palette.panel};
       --card: ${palette.card};
+      --pin: ${palette.pin};
+      --pin-line: ${palette.pinBorder};
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     }
     text { fill: ${palette.text}; }

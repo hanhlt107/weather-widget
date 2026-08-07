@@ -13,7 +13,7 @@
     <p id="error" class="ww-error" hidden></p>
 
     <div id="content" class="ww-content" hidden>
-      <section class="ww-section ww-slider">
+      <section class="ww-section ww-slider" id="section-hourly">
         <div class="ww-section-head">
           <h2 class="ww-section-title" id="hourly-title">Thời tiết trong 24h tới</h2>
           <button type="button" id="picker-open" class="ww-pin" aria-label="Đổi vị trí" title="Đổi vị trí">
@@ -32,8 +32,10 @@
         </button>
       </section>
 
-      <section class="ww-section">
-        <h2 class="ww-section-title" id="daily-title">Thời tiết 7 ngày tới</h2>
+      <section class="ww-section" id="section-daily">
+        <div class="ww-section-head" id="daily-head">
+          <h2 class="ww-section-title" id="daily-title">Thời tiết 7 ngày tới</h2>
+        </div>
         <ul id="daily" class="ww-daily"></ul>
       </section>
     </div>

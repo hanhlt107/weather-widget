@@ -1,6 +1,5 @@
 &nbsp;<div align="center">
-  <!-- Đổi YOUR-PROJECT thành domain Vercel sau khi deploy -->
-  [![Thời tiết](https://YOUR-PROJECT.vercel.app/api/weather?view=all)](https://open-meteo.com/)
+  [![Thời tiết](https://weather-widget-ebon.vercel.app/api/weather?view=all)](https://open-meteo.com/)
 </div>
 
 &nbsp;<div align="center">

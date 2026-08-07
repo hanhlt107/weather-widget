@@ -1,23 +1,23 @@
 export const LOCATIONS = {
-  hanoi: { name: 'Hà Nội', latitude: 21.0278, longitude: 105.8342 },
-  saigon: { name: 'TP. Hồ Chí Minh', latitude: 10.8231, longitude: 106.6297 },
-  danang: { name: 'Đà Nẵng', latitude: 16.0678, longitude: 108.2208 },
-  haiphong: { name: 'Hải Phòng', latitude: 20.8449, longitude: 106.6881 },
-  hue: { name: 'Huế', latitude: 16.4637, longitude: 107.5909 },
-  cantho: { name: 'Cần Thơ', latitude: 10.0452, longitude: 105.7469 },
-  dalat: { name: 'Đà Lạt', latitude: 11.9404, longitude: 108.4583 },
-  nhatrang: { name: 'Nha Trang', latitude: 12.2388, longitude: 109.1967 }
+  hanoi: { name: "Hà Nội", latitude: 21.0278, longitude: 105.8342 },
+  saigon: { name: "TP. Hồ Chí Minh", latitude: 10.8231, longitude: 106.6297 },
+  danang: { name: "Đà Nẵng", latitude: 16.0678, longitude: 108.2208 },
+  haiphong: { name: "Hải Phòng", latitude: 20.8449, longitude: 106.6881 },
+  hue: { name: "Huế", latitude: 16.4637, longitude: 107.5909 },
+  cantho: { name: "Cần Thơ", latitude: 10.0452, longitude: 105.7469 },
+  dalat: { name: "Đà Lạt", latitude: 11.9404, longitude: 108.4583 },
+  nhatrang: { name: "Nha Trang", latitude: 12.2388, longitude: 109.1967 },
 };
 
 export const DEFAULTS = {
-  location: 'hanoi',
-  view: 'all',
-  theme: 'auto',
-  unit: 'celsius',
-  timezone: 'auto',
+  location: "hanoi",
+  view: "all",
+  theme: "auto",
+  unit: "celsius",
+  timezone: "auto",
   forecastDays: 7,
   hours: 12,
-  days: 7
+  days: 7,
 };
 
 export const LAYOUT = {
@@ -26,51 +26,69 @@ export const LAYOUT = {
   padding: 14,
   hourlyPanelHeight: 100,
   dailyPanelHeight: 114,
-  maxCityLength: 40
+  maxCityLength: 40,
 };
 
 export const CACHE = {
   maxAgeSeconds: 900,
-  staleWhileRevalidateSeconds: 1800
+  staleWhileRevalidateSeconds: 1800,
 };
 
 export const TEXT = {
-  weekdays: ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'],
-  now: 'Bây giờ',
-  today: 'Hôm nay',
+  weekdays: ["CN", "T2", "T3", "T4", "T5", "T6", "T7"],
+  now: "Bây giờ",
+  today: "Hôm nay",
   hourlyTitle: (city) => `Thời tiết ${city} trong 24h tới`,
   dailyTitle: (city) => `Thời tiết ${city} 7 ngày tới`,
-  errorPrefix: 'Không tải được thời tiết',
-  upstreamError: 'Open-Meteo trả về lỗi',
-  unknownError: 'Lỗi không xác định'
+  errorPrefix: "Không tải được thời tiết",
+  upstreamError: "Open-Meteo trả về lỗi",
+  unknownError: "Lỗi không xác định",
 };
 
 export const API = {
-  forecastUrl: 'https://api.open-meteo.com/v1/forecast',
-  current: 'is_day,weather_code',
-  hourly: 'temperature_2m,weather_code,precipitation_probability,is_day',
-  daily: 'weather_code,temperature_2m_max,precipitation_probability_max'
+  forecastUrl: "https://api.open-meteo.com/v1/forecast",
+  current: "is_day,weather_code",
+  hourly: "temperature_2m,weather_code,precipitation_probability,is_day",
+  daily: "weather_code,temperature_2m_max,precipitation_probability_max",
 };
 
-export const VIEWS = ['all', '1d', '7d'];
-export const THEMES = ['auto', 'light', 'dark'];
-export const UNITS = ['celsius', 'fahrenheit'];
+export const VIEWS = ["all", "1d", "7d"];
+export const THEMES = ["auto", "light", "dark"];
+export const UNITS = ["celsius", "fahrenheit"];
 
 export const PALETTES = {
   light: {
-    bg1: '#cfe4fb', bg2: '#e8f1fd',
-    text: '#0f2a54', muted: 'rgba(15,42,84,.58)',
-    panel: 'rgba(255,255,255,.55)', card: 'rgba(255,255,255,.82)',
-    cloud: '#ffffff', cloudLine: 'rgba(15,42,84,.18)',
-    rain: '#4b9bea', sun: '#f7b731', snow: '#9fd0f5', moon: '#dfe6f5'
+    bg1: "#cfe4fb",
+    bg2: "#e8f1fd",
+    text: "#0f2a54",
+    muted: "rgba(15,42,84,.58)",
+    panel: "rgba(255,255,255,.55)",
+    card: "rgba(255,255,255,.82)",
+    cloud: "#ffffff",
+    cloudLine: "rgba(15,42,84,.18)",
+    rain: "#4b9bea",
+    sun: "#f7b731",
+    snow: "#9fd0f5",
+    moon: "#dfe6f5",
+    pin: "#e23b3b",
+    pinBorder: "rgba(226,59,59,.35)",
   },
   dark: {
-    bg1: '#16294a', bg2: '#24406d',
-    text: '#eaf2ff', muted: 'rgba(234,242,255,.62)',
-    panel: 'rgba(255,255,255,.08)', card: 'rgba(255,255,255,.14)',
-    cloud: '#dfe9f7', cloudLine: 'rgba(255,255,255,.22)',
-    rain: '#7cc0ff', sun: '#f7b731', snow: '#9fd0f5', moon: '#dfe6f5'
-  }
+    bg1: "#16294a",
+    bg2: "#24406d",
+    text: "#eaf2ff",
+    muted: "rgba(234,242,255,.62)",
+    panel: "rgba(255,255,255,.08)",
+    card: "rgba(255,255,255,.14)",
+    cloud: "#dfe9f7",
+    cloudLine: "rgba(255,255,255,.22)",
+    rain: "#7cc0ff",
+    sun: "#f7b731",
+    snow: "#9fd0f5",
+    moon: "#dfe6f5",
+    pin: "#ff6b6b",
+    pinBorder: "rgba(255,107,107,.45)",
+  },
 };
 
 export function pick(value, allowed, fallback) {
@@ -78,16 +96,18 @@ export function pick(value, allowed, fallback) {
 }
 
 export function resolveLocation(query = {}) {
-  const preset = LOCATIONS[String(query.location || '').toLowerCase()];
+  const preset = LOCATIONS[String(query.location || "").toLowerCase()];
   const base = preset || LOCATIONS[DEFAULTS.location];
 
   const lat = Number(query.lat);
   const lon = Number(query.lon);
 
   return {
-    name: query.city ? String(query.city).slice(0, LAYOUT.maxCityLength) : base.name,
+    name: query.city
+      ? String(query.city).slice(0, LAYOUT.maxCityLength)
+      : base.name,
     latitude: Number.isFinite(lat) ? lat : base.latitude,
-    longitude: Number.isFinite(lon) ? lon : base.longitude
+    longitude: Number.isFinite(lon) ? lon : base.longitude,
   };
 }
 
@@ -96,7 +116,7 @@ export function resolveOptions(query = {}) {
     location: resolveLocation(query),
     view: pick(query.view, VIEWS, DEFAULTS.view),
     theme: pick(query.theme, THEMES, DEFAULTS.theme),
-    unit: pick(query.unit, UNITS, DEFAULTS.unit)
+    unit: pick(query.unit, UNITS, DEFAULTS.unit),
   };
 }
 
@@ -109,12 +129,12 @@ export function forecastUrl(location, unit, timezone) {
     daily: API.daily,
     temperature_unit: pick(unit, UNITS, DEFAULTS.unit),
     timezone: timezone || DEFAULTS.timezone,
-    forecast_days: DEFAULTS.forecastDays
+    forecast_days: DEFAULTS.forecastDays,
   };
 
   const parts = Object.keys(params).map(
-    (key) => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`
+    (key) => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`,
   );
 
-  return `${API.forecastUrl}?${parts.join('&')}`;
+  return `${API.forecastUrl}?${parts.join("&")}`;
 }
