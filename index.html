@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="auto">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather Widget — Thời tiết hôm nay</title>
+  <meta name="description" content="Widget thời tiết đơn giản dùng Open-Meteo, không cần API key." />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛅</text></svg>" />
+</head>
+<body>
+  <main class="page">
+    <section class="weather-widget" id="widget" aria-live="polite">
+      <p id="error" class="ww-error" hidden></p>
+
+      <div id="content" class="ww-content" hidden>
+        <section class="ww-section">
+          <h2 class="ww-section-title" id="hourly-title">Thời tiết trong 24h tới</h2>
+          <div class="ww-slider">
+            <button type="button" id="hourly-prev" class="ww-nav ww-nav-prev" aria-label="Xem giờ trước đó" hidden>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 5 8 12 15 19"/></svg>
+            </button>
+            <ul id="hourly" class="ww-track"></ul>
+            <button type="button" id="hourly-next" class="ww-nav ww-nav-next" aria-label="Xem giờ tiếp theo" hidden>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 5 16 12 9 19"/></svg>
+            </button>
+          </div>
+        </section>
+
+        <section class="ww-section">
+          <h2 class="ww-section-title" id="daily-title">Thời tiết 7 ngày tới</h2>
+          <div class="ww-panel">
+            <ul id="daily" class="ww-daily"></ul>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/weather-codes.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

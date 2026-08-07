@@ -1,0 +1,8 @@
+{
+  "name": "weather-widget",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Widget thời tiết dùng Open-Meteo, kèm API sinh SVG để nhúng vào README",
+  "license": "MIT"
+}
