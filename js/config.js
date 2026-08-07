@@ -34,23 +34,63 @@
     loadError: function (reason) { return 'Không tải được dữ liệu: ' + reason; },
     timeout: 'Hết thời gian chờ, vui lòng thử lại',
     serverError: function (status) { return 'Máy chủ trả về lỗi ' + status; },
-    upstreamError: 'API trả về lỗi'
+    upstreamError: 'API trả về lỗi',
+    pickerOpen: 'Đổi vị trí',
+    pickerTitle: 'Chọn vị trí trên bản đồ',
+    pickerHint: 'Chạm vào bản đồ để chọn nơi bạn muốn xem thời tiết.',
+    pickerClose: 'Đóng',
+    pickerConfirm: 'Xem thời tiết',
+    pickerLocate: 'Vị trí của tôi',
+    pickerLocating: 'Đang định vị…',
+    pickerLocateError: 'Không lấy được vị trí của bạn',
+    pickerLoading: 'Đang tải bản đồ…',
+    pickerMapError: 'Không tải được bản đồ',
+    coords: function (lat, lon) { return lat.toFixed(3) + ', ' + lon.toFixed(3); }
   };
 
   var API = {
     forecastUrl: 'https://api.open-meteo.com/v1/forecast',
+    reverseUrl: 'https://nominatim.openstreetmap.org/reverse',
     current: 'is_day,weather_code',
     hourly: 'temperature_2m,weather_code,precipitation_probability,is_day',
     daily: 'weather_code,temperature_2m_max,precipitation_probability_max'
   };
+
+  var MAP = {
+    tileUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    zoom: 11,
+    minZoom: 2,
+    maxZoom: 18
+  };
+
+  var STORAGE_KEY = 'weather-widget:location';
+
+  function readSaved() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      var saved = JSON.parse(raw);
+      if (typeof saved.latitude !== 'number' || typeof saved.longitude !== 'number') return null;
+      return saved;
+    } catch (e) {
+      return null;
+    }
+  }
 
   global.WeatherConfig = {
     LOCATIONS: LOCATIONS,
     DEFAULTS: DEFAULTS,
     TEXT: TEXT,
     API: API,
+    MAP: MAP,
     location: function () {
-      return LOCATIONS[DEFAULTS.location] || LOCATIONS.hanoi;
+      return readSaved() || LOCATIONS[DEFAULTS.location] || LOCATIONS.hanoi;
+    },
+    saveLocation: function (location) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(location));
+      } catch (e) { /* storage đầy hoặc bị chặn — bỏ qua */ }
     }
   };
 })(window);

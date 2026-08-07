@@ -61,6 +61,24 @@
       });
 
       return getJSON(url);
+    },
+
+    reverseGeocode: function (lat, lon) {
+      var url = buildUrl(CONFIG.API.reverseUrl, {
+        lat: lat,
+        lon: lon,
+        format: 'jsonv2',
+        zoom: 10,
+        'accept-language': 'vi'
+      });
+
+      return getJSON(url)
+        .then(function (data) {
+          var a = (data && data.address) || {};
+          var name = a.city || a.town || a.village || a.county || a.state || a.country;
+          return name || null;
+        })
+        .catch(function () { return null; });
     }
   };
 

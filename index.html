@@ -9,37 +9,64 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛅</text></svg>" />
 </head>
 <body>
-  <main class="page">
-    <section class="weather-widget" id="widget" aria-live="polite">
-      <p id="error" class="ww-error" hidden></p>
+  <main class="page" id="widget" aria-live="polite">
+    <p id="error" class="ww-error" hidden></p>
 
-      <div id="content" class="ww-content" hidden>
-        <section class="ww-section">
+    <div id="content" class="ww-content" hidden>
+      <section class="ww-section ww-slider">
+        <div class="ww-section-head">
           <h2 class="ww-section-title" id="hourly-title">Thời tiết trong 24h tới</h2>
-          <div class="ww-slider">
-            <button type="button" id="hourly-prev" class="ww-nav ww-nav-prev" aria-label="Xem giờ trước đó" hidden>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 5 8 12 15 19"/></svg>
-            </button>
-            <ul id="hourly" class="ww-track"></ul>
-            <button type="button" id="hourly-next" class="ww-nav ww-nav-next" aria-label="Xem giờ tiếp theo" hidden>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 5 16 12 9 19"/></svg>
-            </button>
-          </div>
-        </section>
+          <button type="button" id="picker-open" class="ww-pin" aria-label="Đổi vị trí" title="Đổi vị trí">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/>
+              <circle cx="12" cy="10" r="2.6"/>
+            </svg>
+          </button>
+        </div>
+        <button type="button" id="hourly-prev" class="ww-nav ww-nav-prev" aria-label="Xem giờ trước đó" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 5 8 12 15 19"/></svg>
+        </button>
+        <ul id="hourly" class="ww-track"></ul>
+        <button type="button" id="hourly-next" class="ww-nav ww-nav-next" aria-label="Xem giờ tiếp theo" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 5 16 12 9 19"/></svg>
+        </button>
+      </section>
 
-        <section class="ww-section">
-          <h2 class="ww-section-title" id="daily-title">Thời tiết 7 ngày tới</h2>
-          <div class="ww-panel">
-            <ul id="daily" class="ww-daily"></ul>
-          </div>
-        </section>
-      </div>
-    </section>
+      <section class="ww-section">
+        <h2 class="ww-section-title" id="daily-title">Thời tiết 7 ngày tới</h2>
+        <ul id="daily" class="ww-daily"></ul>
+      </section>
+    </div>
   </main>
+
+  <div class="ww-modal" id="picker-dialog" role="dialog" aria-modal="true" aria-labelledby="picker-title" hidden>
+    <div class="ww-modal-box">
+      <header class="ww-modal-head">
+        <div>
+          <h2 class="ww-modal-title" id="picker-title">Chọn vị trí trên bản đồ</h2>
+          <p class="ww-modal-hint">Chạm vào bản đồ để chọn nơi bạn muốn xem thời tiết.</p>
+        </div>
+        <button type="button" id="picker-close" class="ww-modal-close" aria-label="Đóng">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </header>
+
+      <div class="ww-map" id="picker-map"></div>
+
+      <footer class="ww-modal-foot">
+        <p class="ww-modal-status" id="picker-status" aria-live="polite"></p>
+        <div class="ww-modal-actions">
+          <button type="button" id="picker-locate" class="ww-btn">Vị trí của tôi</button>
+          <button type="button" id="picker-confirm" class="ww-btn ww-btn-primary" disabled>Xem thời tiết</button>
+        </div>
+      </footer>
+    </div>
+  </div>
 
   <script src="js/config.js"></script>
   <script src="js/weather-codes.js"></script>
   <script src="js/api.js"></script>
+  <script src="js/location-picker.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

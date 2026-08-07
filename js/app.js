@@ -22,7 +22,8 @@
       'widget', 'error', 'content',
       'hourly-title', 'daily-title',
       'hourly', 'daily',
-      'hourly-prev', 'hourly-next'
+      'hourly-prev', 'hourly-next',
+      'picker-open'
     ].forEach(function (id) {
       el[id] = document.getElementById(id);
     });
@@ -202,6 +203,17 @@
 
   function bindEvents() {
     refreshNav = setupSlider('hourly', 'hourly-prev', 'hourly-next');
+
+    LocationPicker.init({
+      onPick: function (location) {
+        LOCATION = location;
+        load();
+      }
+    });
+
+    el['picker-open'].addEventListener('click', function () {
+      LocationPicker.open(LOCATION);
+    });
 
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) return;
