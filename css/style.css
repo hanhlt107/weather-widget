@@ -103,7 +103,7 @@ a { color: var(--ww-accent); }
 .page {
   width: 100%;
   max-width: 540px;
-  padding: 16px;
+  padding: 0 16px 16px;
 }
 
 .page[data-daytime='night'] { --ww-card-bg: #1a2f52; --ww-card-shadow: 0 6px 20px rgba(0,0,0,0.30); --ww-text: #eaf2ff; --ww-muted: rgba(234,242,255,0.62); --ww-surface: rgba(255,255,255,0.08); --ww-surface-strong: rgba(255,255,255,0.14); --ww-border: rgba(255,255,255,0.14); --ww-pin: #ff6b6b; --ww-pin-soft: rgba(255,107,107,0.18); --ww-pin-border: rgba(255,107,107,0.45); }
@@ -194,7 +194,6 @@ a { color: var(--ww-accent); }
 
 .ww-muted { color: var(--ww-muted); }
 
-.ww-section + .ww-section { margin-top: 18px; }
 
 .ww-section-title {
   margin-bottom: 8px;
