@@ -321,9 +321,9 @@ function buildCalendar(data, originY) {
     const s = w / CW;
     return `<g${extra || ''}>
       <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${w.toFixed(1)}" rx="${(10 * s).toFixed(1)}" fill="${fill}"/>
-      <text x="${(x + 9 * s).toFixed(1)}" y="${(y + 17 * s).toFixed(1)}" class="cal-day${cls}" style="font-size:${(10 * s).toFixed(1)}px">${day}</text>
-      <text x="${(x + w / 2).toFixed(1)}" y="${(y + w / 2 + 7 * s).toFixed(1)}" class="cal-temp${cls}" text-anchor="middle" style="font-size:${(15 * s).toFixed(1)}px">${hi}°</text>
-      <text x="${(x + w / 2).toFixed(1)}" y="${(y + w - 9 * s).toFixed(1)}" class="cal-lo${cls}" text-anchor="middle" style="font-size:${(9.5 * s).toFixed(1)}px">${lo}°</text>
+      <text x="${(x + 6 * s).toFixed(1)}" y="${(y + 14 * s).toFixed(1)}" class="cal-day${cls}" style="font-size:${(9 * s).toFixed(1)}px">${day}</text>
+      <text x="${(x + w / 2).toFixed(1)}" y="${(y + w / 2 + 6 * s).toFixed(1)}" class="cal-temp${cls}" text-anchor="middle" style="font-size:${(13 * s).toFixed(1)}px">${hi}°</text>
+      <text x="${(x + w / 2).toFixed(1)}" y="${(y + w - 7 * s).toFixed(1)}" class="cal-lo${cls}" text-anchor="middle" style="font-size:${(8.5 * s).toFixed(1)}px">${lo}°</text>
     </g>`;
   };
 

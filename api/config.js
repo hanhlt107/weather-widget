@@ -30,7 +30,7 @@ export const LAYOUT = {
   hourlyPanelHeight: 100,
   dailyPanelHeight: 114,
   chartPlotHeight: 120,
-  cellSize: 62,
+  cellSize: 48,
   cellGap: 4,
   maxCityLength: 40,
 };
