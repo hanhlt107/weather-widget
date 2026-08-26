@@ -26,11 +26,11 @@ export const DEFAULTS = {
 export const LAYOUT = {
   cardWidth: 70,
   cardGap: 2,
-  padding: 19,
+  padding: 12,
   hourlyPanelHeight: 100,
   dailyPanelHeight: 114,
   chartPlotHeight: 120,
-  cellSize: 48,
+  cellSize: 30,
   cellGap: 4,
   maxCityLength: 40,
 };
@@ -49,6 +49,8 @@ export const TEXT = {
   monthTitle: (city, month, year) => `Nhiệt độ ${city} tháng ${month}/${year}`,
   months: ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
   calendarWeekdays: ["CN", "T2", "T3", "T4", "T5", "T6", "T7"],
+  legendLess: "Mát",
+  legendMore: "Nóng",
   errorPrefix: "Không tải được thời tiết",
   upstreamError: "Open-Meteo trả về lỗi",
   unknownError: "Lỗi không xác định",
@@ -58,7 +60,7 @@ export const API = {
   forecastUrl: "https://api.open-meteo.com/v1/forecast",
   current: "is_day,weather_code,temperature_2m",
   hourly: "temperature_2m,weather_code,precipitation_probability,is_day",
-  daily: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max",
+  daily: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum",
 };
 
 export const VIEWS = ["all", "1d", "7d"];
@@ -105,14 +107,22 @@ export const PALETTES = {
   },
 };
 
+// GitHub contribution-style discrete scale: level 0 (coolest) -> level 4 (hottest)
 export const HEAT_SCALE = [
-  "#7cb5ec",
-  "#a6d3d6",
-  "#c9e6b8",
-  "#e8e59a",
-  "#f5d16b",
-  "#f0a848",
-  "#e8722c",
+  "#eeeeee",
+  "#ffe08a",
+  "#ffc531",
+  "#f5a201",
+  "#c97a00",
+];
+
+// Dark-theme variant of the yellow scale
+export const HEAT_SCALE_DARK = [
+  "#1c1a12",
+  "#5a4708",
+  "#a37a05",
+  "#e0a300",
+  "#ffc531",
 ];
 
 export function pick(value, allowed, fallback) {
