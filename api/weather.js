@@ -324,9 +324,9 @@ function buildCalendar(data, originY, night) {
 
   // Header / legend text scale with the cell so everything stays proportional as CW shrinks.
   const headFs = Math.max(6, Math.min(11, CW * 0.32)).toFixed(1);
-  const headGap = Math.max(6, CW * 0.38);
+  const headGap = Math.max(5, CW * 0.28);
 
-  const headerY = originY + 10;
+  const headerY = originY + 8;
   let heads = '';
   for (let c = 0; c < cols; c++) {
     const cx = PAD + c * (CW + CG) + CW / 2;
@@ -397,7 +397,7 @@ function buildCalendar(data, originY, night) {
 
   // GitHub-style "Mát  □ □ □ □ □  Nóng" legend under the grid, scaled to the cell size.
   const legFs = Math.max(6, Math.min(10, CW * 0.32));
-  const legendY = gridTop + gridH + Math.max(7, CW * 0.5);
+  const legendY = gridTop + gridH + Math.max(6, CW * 0.42);
   const sw = Math.max(4, CW * 0.34);   // swatch size
   const sgap = Math.max(0.8, CW * 0.08);
   const lessW = legFs * 2.4;          // rough width of "Mát"
