@@ -12,6 +12,7 @@ export const LOCATIONS = {
 export const DEFAULTS = {
   location: "hanoi",
   view: "all",
+  mode: "card",
   theme: "auto",
   unit: "celsius",
   timezone: "auto",
@@ -28,6 +29,9 @@ export const LAYOUT = {
   padding: 19,
   hourlyPanelHeight: 100,
   dailyPanelHeight: 114,
+  chartPlotHeight: 120,
+  cellSize: 62,
+  cellGap: 4,
   maxCityLength: 40,
 };
 
@@ -42,6 +46,9 @@ export const TEXT = {
   today: "Hôm nay",
   hourlyTitle: (city) => `Thời tiết ${city} trong 24h tới`,
   dailyTitle: (city) => `Thời tiết ${city} 7 ngày tới`,
+  monthTitle: (city, month, year) => `Nhiệt độ ${city} tháng ${month}/${year}`,
+  months: ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+  calendarWeekdays: ["CN", "T2", "T3", "T4", "T5", "T6", "T7"],
   errorPrefix: "Không tải được thời tiết",
   upstreamError: "Open-Meteo trả về lỗi",
   unknownError: "Lỗi không xác định",
@@ -49,12 +56,13 @@ export const TEXT = {
 
 export const API = {
   forecastUrl: "https://api.open-meteo.com/v1/forecast",
-  current: "is_day,weather_code",
+  current: "is_day,weather_code,temperature_2m",
   hourly: "temperature_2m,weather_code,precipitation_probability,is_day",
-  daily: "weather_code,temperature_2m_max,precipitation_probability_max",
+  daily: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max",
 };
 
 export const VIEWS = ["all", "1d", "7d"];
+export const MODES = ["card", "chart", "calendar"];
 export const THEMES = ["auto", "light", "dark"];
 export const UNITS = ["celsius", "fahrenheit"];
 
@@ -70,6 +78,12 @@ export const PALETTES = {
     moon: "#dfe6f5",
     pin: "#e23b3b",
     pinBorder: "rgba(226,59,59,.35)",
+    chart: "#f5811f",
+    chartFill: "rgba(245,129,31,.12)",
+    grid: "rgba(15,42,84,.10)",
+    cellEmpty: "#eef1f6",
+    cellText: "#5a4a2a",
+    accent: "#e5342b",
   },
   dark: {
     text: "#eaf2ff",
@@ -82,8 +96,24 @@ export const PALETTES = {
     moon: "#dfe6f5",
     pin: "#ff6b6b",
     pinBorder: "rgba(255,107,107,.45)",
+    chart: "#ff9f43",
+    chartFill: "rgba(255,159,67,.16)",
+    grid: "rgba(234,242,255,.12)",
+    cellEmpty: "rgba(234,242,255,.08)",
+    cellText: "#3a2c14",
+    accent: "#ff5b52",
   },
 };
+
+export const HEAT_SCALE = [
+  "#7cb5ec",
+  "#a6d3d6",
+  "#c9e6b8",
+  "#e8e59a",
+  "#f5d16b",
+  "#f0a848",
+  "#e8722c",
+];
 
 export function pick(value, allowed, fallback) {
   return allowed.includes(value) ? value : fallback;
@@ -113,6 +143,12 @@ export const COLOR_PARAMS = {
   snow_color: "snow",
   pin_color: "pin",
   pin_border_color: "pinBorder",
+  chart_color: "chart",
+  chart_fill_color: "chartFill",
+  grid_color: "grid",
+  cell_empty_color: "cellEmpty",
+  cell_text_color: "cellText",
+  accent_color: "accent",
 };
 
 export function resolvePalette(query = {}, base) {
@@ -147,6 +183,7 @@ export function resolveOptions(query = {}) {
   return {
     location: resolveLocation(query),
     view: pick(query.view, VIEWS, DEFAULTS.view),
+    mode: pick(query.mode, MODES, DEFAULTS.mode),
     theme: pick(query.theme, THEMES, DEFAULTS.theme),
     unit: pick(query.unit, UNITS, DEFAULTS.unit),
     hideTitle: validateBool(query.hide_title, DEFAULTS.hideTitle),
@@ -164,6 +201,34 @@ export function forecastUrl(location, unit, timezone) {
     temperature_unit: pick(unit, UNITS, DEFAULTS.unit),
     timezone: timezone || DEFAULTS.timezone,
     forecast_days: DEFAULTS.forecastDays,
+  };
+
+  const parts = Object.keys(params).map(
+    (key) => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`,
+  );
+
+  return `${API.forecastUrl}?${parts.join("&")}`;
+}
+
+function ymd(year, month, day) {
+  const mm = month < 10 ? "0" + month : String(month);
+  const dd = day < 10 ? "0" + day : String(day);
+  return `${year}-${mm}-${dd}`;
+}
+
+export function monthUrl(location, unit, today = new Date(), timezone) {
+  const year = today.getFullYear();
+  const month = today.getMonth() + 1;
+  const lastDay = new Date(year, month, 0).getDate();
+
+  const params = {
+    latitude: location.latitude,
+    longitude: location.longitude,
+    daily: API.daily,
+    temperature_unit: pick(unit, UNITS, DEFAULTS.unit),
+    timezone: timezone || DEFAULTS.timezone,
+    start_date: ymd(year, month, 1),
+    end_date: ymd(year, month, lastDay),
   };
 
   const parts = Object.keys(params).map(

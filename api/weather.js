@@ -1,6 +1,6 @@
 import {
-  DEFAULTS, LAYOUT, CACHE, TEXT, PALETTES,
-  resolveOptions, resolvePalette, forecastUrl
+  DEFAULTS, LAYOUT, CACHE, TEXT, PALETTES, HEAT_SCALE,
+  resolveOptions, resolvePalette, forecastUrl, monthUrl
 } from './config.js';
 
 const WEEKDAYS = TEXT.weekdays;
@@ -31,6 +31,11 @@ function escapeXml(text) {
 
 function pad2(n) {
   return n < 10 ? '0' + n : String(n);
+}
+
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
 function parseLocalTime(text) {
@@ -131,15 +136,16 @@ function buildHourly(data, originY) {
 
     const t = parseLocalTime(data.hourly.time[idx]);
     const x = PAD + i * (CARD_W + GAP);
+    const isNow = i === 0;
     body += card(
       x, originY + 16,
-      i === 0 ? TEXT.now : pad2(t.hour) + ':' + pad2(t.minute),
+      isNow ? TEXT.now : pad2(t.hour) + ':' + pad2(t.minute),
       '',
-      data.hourly.weather_code[idx],
-      data.hourly.is_day[idx] === 1,
+      isNow ? data.current.weather_code : data.hourly.weather_code[idx],
+      isNow ? data.current.is_day === 1 : data.hourly.is_day[idx] === 1,
       data.hourly.precipitation_probability[idx],
-      Math.round(data.hourly.temperature_2m[idx]),
-      i === 0
+      Math.round(isNow ? data.current.temperature_2m : data.hourly.temperature_2m[idx]),
+      isNow
     );
   }
 
@@ -166,16 +172,240 @@ function buildDaily(data, originY) {
   return { body, width: DAYS * (CARD_W + GAP) - GAP, height: LAYOUT.dailyPanelHeight };
 }
 
+function smoothPath(pts) {
+  if (pts.length < 2) return pts.length ? `M${pts[0].x} ${pts[0].y}` : '';
+  let d = `M${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[i + 2] || p2;
+    const c1x = p1.x + (p2.x - p0.x) / 6;
+    const c1y = p1.y + (p2.y - p0.y) / 6;
+    const c2x = p2.x - (p3.x - p1.x) / 6;
+    const c2y = p2.y - (p3.y - p1.y) / 6;
+    d += ` C${c1x.toFixed(1)} ${c1y.toFixed(1)} ${c2x.toFixed(1)} ${c2y.toFixed(1)} ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+  }
+  return d;
+}
+
+function niceTicks(min, max, count) {
+  const raw = (max - min) / count;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw / mag;
+  const step = (norm >= 5 ? 10 : norm >= 2 ? 5 : norm >= 1 ? 2 : 1) * mag;
+  const ticks = [];
+  for (let v = Math.ceil(min / step) * step; v <= max + 1e-6; v += step) ticks.push(Math.round(v));
+  return ticks;
+}
+
+function buildChart(data, originY, chartWidth) {
+  const n = data.daily.time.length;
+  const highs = [];
+  for (let i = 0; i < n; i++) highs.push(Math.round(data.daily.temperature_2m_max[i]));
+
+  const plotH = LAYOUT.chartPlotHeight;
+  const axisW = 26;
+  const top = originY + 16;
+  const left = PAD + axisW;
+  const plotW = chartWidth - axisW;
+  const right = left + plotW;
+
+  let min = Math.min(...highs);
+  let max = Math.max(...highs);
+  if (max === min) { max += 1; min -= 1; }
+  const pad = Math.max(1, (max - min) * 0.22);
+  min -= pad;
+  max += pad;
+
+  const stepX = n > 1 ? plotW / (n - 1) : 0;
+  const xAt = (i) => left + i * stepX;
+  const yAt = (v) => top + plotH - ((v - min) / (max - min)) * plotH;
+
+  const pts = highs.map((v, i) => ({ x: xAt(i), y: yAt(v), v }));
+
+  const ticks = niceTicks(min, max, 4);
+  let grid = '';
+  let yLabels = '';
+  for (const tv of ticks) {
+    const gy = yAt(tv);
+    grid += `<line x1="${left}" y1="${gy.toFixed(1)}" x2="${right}" y2="${gy.toFixed(1)}" class="grid"/>`;
+    yLabels += `<text x="${left - 8}" y="${(gy + 3.5).toFixed(1)}" class="chart-axis" text-anchor="end">${tv}°</text>`;
+  }
+
+  const linePath = smoothPath(pts);
+  const areaPath = `${linePath} L${right.toFixed(1)} ${(top + plotH).toFixed(1)} L${left.toFixed(1)} ${(top + plotH).toFixed(1)} Z`;
+
+  const today = todayStr();
+  let dots = '';
+  let xLabels = '';
+  let todayMark = '';
+  for (let i = 0; i < n; i++) {
+    const p = pts[i];
+    const t = parseLocalTime(data.daily.time[i] + 'T00:00');
+    const isToday = data.daily.time[i] === today;
+    if (isToday) {
+      const cx = p.x.toFixed(1);
+      const cy = p.y.toFixed(1);
+      todayMark = `<line x1="${cx}" y1="${top}" x2="${cx}" y2="${(top + plotH).toFixed(1)}" class="chart-today-line"/>
+        <circle cx="${cx}" cy="${cy}" r="4" class="chart-today-halo">
+          <animate attributeName="r" values="4;11;4" dur="1.6s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.5;0;0.5" dur="1.6s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="${cx}" cy="${cy}" r="4.4" class="chart-today-dot">
+          <animate attributeName="r" values="4.4;5.4;4.4" dur="1.6s" repeatCount="indefinite"/>
+        </circle>
+        <text x="${cx}" y="${(p.y - 10).toFixed(1)}" class="chart-today-val" text-anchor="middle">${p.v}°</text>`;
+    } else {
+      dots += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.1" class="chart-dot"/>`;
+    }
+    if (i === 0 || t.day % 5 === 0) {
+      xLabels += `<text x="${p.x.toFixed(1)}" y="${(top + plotH + 16).toFixed(1)}" class="chart-axis${isToday ? ' chart-today-axis' : ''}" text-anchor="middle">${t.day}</text>`;
+    }
+  }
+
+  const body = `${grid}
+    <path d="${areaPath}" class="chart-area"/>
+    <path d="${linePath}" class="chart-line"/>
+    ${dots}${todayMark}${yLabels}${xLabels}`;
+
+  return { body, width: chartWidth, height: plotH + 28 };
+}
+
+function hexToRgb(hex) {
+  const h = hex.replace('#', '');
+  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+}
+
+function heatColor(t) {
+  const clamped = Math.max(0, Math.min(1, t));
+  const seg = clamped * (HEAT_SCALE.length - 1);
+  const i = Math.min(HEAT_SCALE.length - 2, Math.floor(seg));
+  const f = seg - i;
+  const a = hexToRgb(HEAT_SCALE[i]);
+  const b = hexToRgb(HEAT_SCALE[i + 1]);
+  const mix = a.map((v, k) => Math.round(v + (b[k] - v) * f));
+  return `rgb(${mix[0]},${mix[1]},${mix[2]})`;
+}
+
+function buildCalendar(data, originY) {
+  const CW = LAYOUT.cellSize;
+  const CG = LAYOUT.cellGap;
+  const cols = 7;
+  const gridW = cols * CW + (cols - 1) * CG;
+
+  const first = parseLocalTime(data.daily.time[0] + 'T00:00');
+  const firstDow = weekdayOf(first.year, first.month, first.day);
+
+  const highs = data.daily.temperature_2m_max.map((v) => Math.round(v));
+  const lows = data.daily.temperature_2m_min
+    ? data.daily.temperature_2m_min.map((v) => Math.round(v))
+    : highs;
+  const min = Math.min(...highs);
+  const max = Math.max(...highs);
+  const span = max - min || 1;
+
+  const headerY = originY + 14;
+  let heads = '';
+  for (let c = 0; c < cols; c++) {
+    const cx = PAD + c * (CW + CG) + CW / 2;
+    heads += `<text x="${cx}" y="${headerY}" class="cal-head" text-anchor="middle">${TEXT.calendarWeekdays[c]}</text>`;
+  }
+
+  const today = todayStr();
+  const gridTop = headerY + 12;
+  const n = data.daily.time.length;
+
+  const drawCell = (x, y, w, day, hi, lo, fill, dark, extra) => {
+    const cls = dark ? ' hot' : '';
+    const s = w / CW;
+    return `<g${extra || ''}>
+      <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${w.toFixed(1)}" rx="${(10 * s).toFixed(1)}" fill="${fill}"/>
+      <text x="${(x + 9 * s).toFixed(1)}" y="${(y + 17 * s).toFixed(1)}" class="cal-day${cls}" style="font-size:${(10 * s).toFixed(1)}px">${day}</text>
+      <text x="${(x + w / 2).toFixed(1)}" y="${(y + w / 2 + 7 * s).toFixed(1)}" class="cal-temp${cls}" text-anchor="middle" style="font-size:${(15 * s).toFixed(1)}px">${hi}°</text>
+      <text x="${(x + w / 2).toFixed(1)}" y="${(y + w - 9 * s).toFixed(1)}" class="cal-lo${cls}" text-anchor="middle" style="font-size:${(9.5 * s).toFixed(1)}px">${lo}°</text>
+    </g>`;
+  };
+
+  let cells = '';
+  let todayCell = '';
+  let rows = 0;
+  for (let i = 0; i < n; i++) {
+    const slot = firstDow + i;
+    const col = slot % cols;
+    const row = Math.floor(slot / cols);
+    rows = row + 1;
+
+    const x = PAD + col * (CW + CG);
+    const y = gridTop + row * (CW + CG);
+    const t = parseLocalTime(data.daily.time[i] + 'T00:00');
+    const fill = heatColor((highs[i] - min) / span);
+    const dark = (highs[i] - min) / span > 0.55;
+
+    if (data.daily.time[i] === today) {
+      const grow = 4;
+      todayCell = drawCell(x - grow / 2, y - grow / 2, CW + grow, t.day, highs[i], lows[i], fill, dark, ' filter="url(#todayShadow)"');
+    } else {
+      cells += drawCell(x, y, CW, t.day, highs[i], lows[i], fill, dark, '');
+    }
+  }
+  cells += todayCell;
+
+  const gridH = rows * CW + (rows - 1) * CG;
+
+  const legendY = gridTop + gridH + 24;
+  const barW = Math.min(gridW - 80, 220);
+  const barX = PAD + (gridW - barW) / 2;
+  let stops = '';
+  HEAT_SCALE.forEach((c, k) => {
+    stops += `<stop offset="${(k / (HEAT_SCALE.length - 1) * 100).toFixed(0)}%" stop-color="${c}"/>`;
+  });
+  const legend = `
+    <text x="${barX - 8}" y="${legendY + 9}" class="cal-legend" text-anchor="end">${min}°</text>
+    <rect x="${barX}" y="${legendY}" width="${barW}" height="8" rx="4" fill="url(#heatGrad)"/>
+    <text x="${barX + barW + 8}" y="${legendY + 9}" class="cal-legend">${max}°</text>`;
+
+  const defs = `<defs>
+    <linearGradient id="heatGrad" x1="0" y1="0" x2="1" y2="0">${stops}</linearGradient>
+    <filter id="todayShadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="1.5" stdDeviation="3" flood-color="rgba(0,0,0,0.28)"/>
+    </filter>
+  </defs>`;
+
+  return { body: defs + heads + cells + legend, width: gridW, height: (legendY + 8) - originY };
+}
+
 function render(data, opts) {
-  const { view, city, theme, colors, hideTitle, hidePin } = opts;
-  const showHourly = view === 'all' || view === '1d';
-  const showDaily = view === 'all' || view === '7d';
+  const { view, mode, city, theme, colors, hideTitle, hidePin } = opts;
+  const chart = mode === 'chart';
+  const calendar = mode === 'calendar';
+  const showHourly = !chart && !calendar && (view === 'all' || view === '1d');
+  const showDaily = !chart && !calendar && (view === 'all' || view === '7d');
   const showTitle = !hideTitle;
   const titleSpace = showTitle ? 0 : 18;
 
   let y = 26 - titleSpace;
   let body = '';
   let width = 0;
+
+  if (calendar) {
+    const first = parseLocalTime(data.daily.time[0] + 'T00:00');
+    const cal = buildCalendar(data, y);
+    const title = TEXT.monthTitle(city, first.month, first.year);
+    body += section(title, y, cal, false, showTitle);
+    width = Math.max(width, cal.width);
+    y += cal.height + 26;
+  }
+
+  if (chart) {
+    const first = parseLocalTime(data.daily.time[0] + 'T00:00');
+    const chartWidth = 7 * (LAYOUT.cellSize + LAYOUT.cellGap) - LAYOUT.cellGap;
+    const c = buildChart(data, y, chartWidth);
+    const title = TEXT.monthTitle(city, first.month, first.year);
+    body += section(title, y, c, false, showTitle);
+    width = Math.max(width, c.width);
+    y += c.height + 26;
+  }
 
   if (showHourly) {
     const cards = buildHourly(data, y);
@@ -193,7 +423,7 @@ function render(data, opts) {
 
   const w = width + PAD * 2;
   const h = y - 8;
-  const isDay = data.current.is_day === 1;
+  const isDay = data.current ? data.current.is_day === 1 : true;
   const night = theme === 'dark' || (theme === 'auto' && !isDay);
 
   const palette = resolvePalette(colors, night ? PALETTES.dark : PALETTES.light);
@@ -208,6 +438,9 @@ function render(data, opts) {
       --rain: ${palette.rain};
       --pin: ${palette.pin};
       --pin-line: ${palette.pinBorder};
+      --chart: ${palette.chart};
+      --chart-fill: ${palette.chartFill};
+      --grid: ${palette.grid};
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     }
     text { fill: ${palette.text}; }
@@ -218,23 +451,43 @@ function render(data, opts) {
     .temp { font-size: 14px; font-weight: 600; }
     .pop { font-size: 11px; fill: transparent; }
     .pop.wet { fill: ${palette.rain}; font-weight: 600; }
+    .grid { stroke: var(--grid); stroke-width: 1; }
+    .chart-area { fill: var(--chart-fill); stroke: none; }
+    .chart-line { fill: none; stroke: var(--chart); stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+    .chart-dot { fill: var(--chart); }
+    .chart-today-line { stroke: ${palette.accent}; stroke-width: 1.2; stroke-dasharray: 3 3; opacity: .55; }
+    .chart-today-halo { fill: ${palette.accent}; }
+    .chart-today-dot { fill: ${palette.accent}; stroke: #fff; stroke-width: 1.8; }
+    .chart-today-val { font-size: 12px; font-weight: 800; fill: ${palette.accent}; }
+    .chart-today-axis { fill: ${palette.accent}; font-weight: 800; }
+    .chart-axis { font-size: 10px; fill: ${palette.muted}; }
+    .cal-head { font-size: 11px; font-weight: 600; fill: ${palette.muted}; letter-spacing: .3px; }
+    .cal-day { font-size: 10px; font-weight: 600; fill: rgba(0,0,0,.42); }
+    .cal-temp { font-size: 15px; font-weight: 700; fill: rgba(0,0,0,.72); }
+    .cal-lo { font-size: 9.5px; fill: rgba(0,0,0,.4); }
+    .cal-day.hot { fill: rgba(255,255,255,.75); }
+    .cal-temp.hot { fill: #fff; }
+    .cal-lo.hot { fill: rgba(255,255,255,.7); }
+    .cal-legend { font-size: 10.5px; font-weight: 600; fill: ${palette.muted}; }
   </style>
   ${body}
 </svg>`;
 }
 
 export default async function handler(req, res) {
-  const { location, view, theme, unit, hideTitle, hidePin } = resolveOptions(req.query || {});
+  const { location, view, mode, theme, unit, hideTitle, hidePin } = resolveOptions(req.query || {});
 
   try {
-    const upstream = await fetch(forecastUrl(location, unit));
+    const monthly = mode === 'calendar' || mode === 'chart';
+    const url = monthly ? monthUrl(location, unit) : forecastUrl(location, unit);
+    const upstream = await fetch(url);
     if (!upstream.ok) throw new Error('Open-Meteo trả về ' + upstream.status);
 
     const data = await upstream.json();
     if (data.error) throw new Error(data.reason || TEXT.upstreamError);
 
     const svg = render(data, {
-      view, city: location.name, theme, colors: req.query || {}, hideTitle, hidePin
+      view, mode, city: location.name, theme, colors: req.query || {}, hideTitle, hidePin
     });
 
     res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
