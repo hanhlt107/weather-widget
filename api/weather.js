@@ -353,26 +353,13 @@ function buildCalendar(data, originY) {
 
   const gridH = rows * CW + (rows - 1) * CG;
 
-  const legendY = gridTop + gridH + 24;
-  const barW = Math.min(gridW - 80, 220);
-  const barX = PAD + (gridW - barW) / 2;
-  let stops = '';
-  HEAT_SCALE.forEach((c, k) => {
-    stops += `<stop offset="${(k / (HEAT_SCALE.length - 1) * 100).toFixed(0)}%" stop-color="${c}"/>`;
-  });
-  const legend = `
-    <text x="${barX - 8}" y="${legendY + 9}" class="cal-legend" text-anchor="end">${min}°</text>
-    <rect x="${barX}" y="${legendY}" width="${barW}" height="8" rx="4" fill="url(#heatGrad)"/>
-    <text x="${barX + barW + 8}" y="${legendY + 9}" class="cal-legend">${max}°</text>`;
-
   const defs = `<defs>
-    <linearGradient id="heatGrad" x1="0" y1="0" x2="1" y2="0">${stops}</linearGradient>
     <filter id="todayShadow" x="-40%" y="-40%" width="180%" height="180%">
       <feDropShadow dx="0" dy="1.5" stdDeviation="3" flood-color="rgba(0,0,0,0.28)"/>
     </filter>
   </defs>`;
 
-  return { body: defs + heads + cells + legend, width: gridW, height: (legendY + 8) - originY };
+  return { body: defs + heads + cells, width: gridW, height: (gridTop + gridH + 8) - originY };
 }
 
 function render(data, opts) {
@@ -428,7 +415,7 @@ function render(data, opts) {
 
   const palette = resolvePalette(colors, night ? PALETTES.dark : PALETTES.light);
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block;max-width:${w}px" role="img" aria-label="Dự báo thời tiết ${escapeXml(city)}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" width="100%" style="width:100%;height:auto;display:block" role="img" aria-label="Dự báo thời tiết ${escapeXml(city)}">
   <style>
     svg {
       --sun: ${palette.sun};
@@ -468,7 +455,6 @@ function render(data, opts) {
     .cal-day.hot { fill: rgba(255,255,255,.75); }
     .cal-temp.hot { fill: #fff; }
     .cal-lo.hot { fill: rgba(255,255,255,.7); }
-    .cal-legend { font-size: 10.5px; font-weight: 600; fill: ${palette.muted}; }
   </style>
   ${body}
 </svg>`;
