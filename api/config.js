@@ -51,9 +51,7 @@ export const TEXT = {
   calendarWeekdays: ["CN", "T2", "T3", "T4", "T5", "T6", "T7"],
   legendLess: "Mát",
   legendMore: "Nóng",
-  errorPrefix: "Không tải được thời tiết",
   upstreamError: "Open-Meteo trả về lỗi",
-  unknownError: "Lỗi không xác định",
 };
 
 export const API = {
@@ -84,8 +82,6 @@ export const PALETTES = {
     chart: "#f5811f",
     chartFill: "rgba(245,129,31,.12)",
     grid: "rgba(15,42,84,.10)",
-    cellEmpty: "#eef1f6",
-    cellText: "#5a4a2a",
     accent: "#e5342b",
   },
   dark: {
@@ -102,8 +98,6 @@ export const PALETTES = {
     chart: "#ff9f43",
     chartFill: "rgba(255,159,67,.16)",
     grid: "rgba(234,242,255,.12)",
-    cellEmpty: "rgba(234,242,255,.08)",
-    cellText: "#3a2c14",
     accent: "#ff5b52",
   },
 };
@@ -157,8 +151,6 @@ export const COLOR_PARAMS = {
   chart_color: "chart",
   chart_fill_color: "chartFill",
   grid_color: "grid",
-  cell_empty_color: "cellEmpty",
-  cell_text_color: "cellText",
   accent_color: "accent",
 };
 

@@ -265,9 +265,7 @@ function buildChart(data, originY, chartWidth, unit) {
   const today = todayStr();
   let dots = '';
   let xLabels = '';
-  let valLabels = '';
   let todayMark = '';
-  let lastLabelX = -Infinity;   // suppress labels that would collide with the previous one
   const monthShort = TEXT.months[parseLocalTime(data.daily.time[0] + 'T00:00').month - 1];
   for (let i = 0; i < n; i++) {
     const p = pts[i];
@@ -289,12 +287,6 @@ function buildChart(data, originY, chartWidth, unit) {
         <text x="${cx}" y="${(p.y - 10).toFixed(1)}" class="chart-today-val" text-anchor="middle">${p.v}°</text>`;
     } else {
       dots += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.1" class="chart-dot"><title>${escapeXml(tip)}</title></circle>`;
-      // Always-visible value label above each point so the numbers read without hovering (README-safe).
-      // Skip labels sitting too close to the previous one to avoid the digits overlapping.
-      if (p.x - lastLabelX >= 15) {
-        valLabels += `<text x="${p.x.toFixed(1)}" y="${(p.y - 6).toFixed(1)}" class="chart-val" text-anchor="middle">${p.v}°</text>`;
-        lastLabelX = p.x;
-      }
     }
     if (i === 0 || t.day % 5 === 0) {
       xLabels += `<text x="${p.x.toFixed(1)}" y="${(top + plotH + 16).toFixed(1)}" class="chart-axis${isToday ? ' chart-today-axis' : ''}" text-anchor="middle">${t.day}</text>`;
@@ -305,7 +297,7 @@ function buildChart(data, originY, chartWidth, unit) {
     ${bars}
     <path d="${areaPath}" class="chart-area"/>
     <path d="${linePath}" class="chart-line"/>
-    ${dots}${todayMark}${valLabels}${yLabels}${rainLabels}${xLabels}`;
+    ${dots}${todayMark}${yLabels}${rainLabels}${xLabels}`;
 
   return { body, width: chartWidth, height: plotH + 28 };
 }
@@ -493,6 +485,7 @@ function render(data, opts) {
   <style>
     svg {
       --sun: ${palette.sun};
+      --moon: ${palette.moon};
       --snow: ${palette.snow};
       --cloud: ${palette.cloud};
       --cloud-line: ${palette.cloudLine};
@@ -520,7 +513,6 @@ function render(data, opts) {
     .chart-today-halo { fill: ${palette.accent}; }
     .chart-today-dot { fill: ${palette.accent}; stroke: #fff; stroke-width: 1.8; }
     .chart-today-val { font-size: 12px; font-weight: 400; fill: ${palette.accent}; }
-    .chart-val { font-size: 8.5px; font-weight: 600; fill: ${palette.text}; opacity: .78; }
     .chart-today-axis { fill: ${palette.accent}; font-weight: 800; }
     .chart-axis { font-size: 10px; fill: ${palette.muted}; }
     .rain-bar { fill: var(--rain); opacity: .4; }
