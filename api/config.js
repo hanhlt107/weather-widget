@@ -58,6 +58,7 @@ export const TEXT = {
 
 export const API = {
   forecastUrl: "https://api.open-meteo.com/v1/forecast",
+  forecastRangeDays: 15,
   current: "is_day,weather_code,temperature_2m",
   hourly: "temperature_2m,weather_code,precipitation_probability,is_day",
   daily: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum",
@@ -231,6 +232,13 @@ export function monthUrl(location, unit, today = new Date(), timezone) {
   const month = today.getMonth() + 1;
   const lastDay = new Date(year, month, 0).getDate();
 
+  const maxForecast = new Date(today);
+  maxForecast.setDate(maxForecast.getDate() + API.forecastRangeDays);
+  const endDay =
+    maxForecast.getFullYear() === year && maxForecast.getMonth() + 1 === month
+      ? Math.min(lastDay, maxForecast.getDate())
+      : lastDay;
+
   const params = {
     latitude: location.latitude,
     longitude: location.longitude,
@@ -238,7 +246,7 @@ export function monthUrl(location, unit, today = new Date(), timezone) {
     temperature_unit: pick(unit, UNITS, DEFAULTS.unit),
     timezone: timezone || DEFAULTS.timezone,
     start_date: ymd(year, month, 1),
-    end_date: ymd(year, month, lastDay),
+    end_date: ymd(year, month, endDay),
   };
 
   const parts = Object.keys(params).map(

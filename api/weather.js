@@ -265,11 +265,16 @@ function buildChart(data, originY, chartWidth, unit) {
   const today = todayStr();
   let dots = '';
   let xLabels = '';
+  let valLabels = '';
   let todayMark = '';
+  let lastLabelX = -Infinity;   // suppress labels that would collide with the previous one
+  const monthShort = TEXT.months[parseLocalTime(data.daily.time[0] + 'T00:00').month - 1];
   for (let i = 0; i < n; i++) {
     const p = pts[i];
     const t = parseLocalTime(data.daily.time[i] + 'T00:00');
     const isToday = data.daily.time[i] === today;
+    // Native SVG tooltip: shows day + temperature (and rain if any) on hover where the host allows it.
+    const tip = `${t.day}/${monthShort}: ${p.v}°${rain[i] > 0 ? ` · ${rain[i]}mm` : ''}`;
     if (isToday) {
       const cx = p.x.toFixed(1);
       const cy = p.y.toFixed(1);
@@ -278,12 +283,18 @@ function buildChart(data, originY, chartWidth, unit) {
           <animate attributeName="r" values="4;11;4" dur="1.6s" repeatCount="indefinite"/>
           <animate attributeName="opacity" values="0.5;0;0.5" dur="1.6s" repeatCount="indefinite"/>
         </circle>
-        <circle cx="${cx}" cy="${cy}" r="4.4" class="chart-today-dot">
+        <circle cx="${cx}" cy="${cy}" r="4.4" class="chart-today-dot"><title>${escapeXml(tip)}</title>
           <animate attributeName="r" values="4.4;5.4;4.4" dur="1.6s" repeatCount="indefinite"/>
         </circle>
         <text x="${cx}" y="${(p.y - 10).toFixed(1)}" class="chart-today-val" text-anchor="middle">${p.v}°</text>`;
     } else {
-      dots += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.1" class="chart-dot"/>`;
+      dots += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.1" class="chart-dot"><title>${escapeXml(tip)}</title></circle>`;
+      // Always-visible value label above each point so the numbers read without hovering (README-safe).
+      // Skip labels sitting too close to the previous one to avoid the digits overlapping.
+      if (p.x - lastLabelX >= 15) {
+        valLabels += `<text x="${p.x.toFixed(1)}" y="${(p.y - 6).toFixed(1)}" class="chart-val" text-anchor="middle">${p.v}°</text>`;
+        lastLabelX = p.x;
+      }
     }
     if (i === 0 || t.day % 5 === 0) {
       xLabels += `<text x="${p.x.toFixed(1)}" y="${(top + plotH + 16).toFixed(1)}" class="chart-axis${isToday ? ' chart-today-axis' : ''}" text-anchor="middle">${t.day}</text>`;
@@ -294,7 +305,7 @@ function buildChart(data, originY, chartWidth, unit) {
     ${bars}
     <path d="${areaPath}" class="chart-area"/>
     <path d="${linePath}" class="chart-line"/>
-    ${dots}${todayMark}${yLabels}${rainLabels}${xLabels}`;
+    ${dots}${todayMark}${valLabels}${yLabels}${rainLabels}${xLabels}`;
 
   return { body, width: chartWidth, height: plotH + 28 };
 }
@@ -509,6 +520,7 @@ function render(data, opts) {
     .chart-today-halo { fill: ${palette.accent}; }
     .chart-today-dot { fill: ${palette.accent}; stroke: #fff; stroke-width: 1.8; }
     .chart-today-val { font-size: 12px; font-weight: 400; fill: ${palette.accent}; }
+    .chart-val { font-size: 8.5px; font-weight: 600; fill: ${palette.text}; opacity: .78; }
     .chart-today-axis { fill: ${palette.accent}; font-weight: 800; }
     .chart-axis { font-size: 10px; fill: ${palette.muted}; }
     .rain-bar { fill: var(--rain); opacity: .4; }
@@ -549,14 +561,10 @@ export default async function handler(req, res) {
     );
     return res.status(200).send(svg);
   } catch (err) {
-    const message = escapeXml(`${TEXT.errorPrefix}: ${err.message || TEXT.unknownError}`);
     res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache');
     return res.status(200).send(
-      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 56" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block;max-width:420px">
-        <rect width="420" height="56" rx="12" fill="#fdecea"/>
-        <text x="16" y="33" font-family="-apple-system, Segoe UI, Arial, sans-serif" font-size="13" fill="#b3261e">${message}</text>
-      </svg>`
+      `<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1" viewBox="0 0 1 1" style="display:block"/>`
     );
   }
 }
