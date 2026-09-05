@@ -5,6 +5,9 @@
   "type": "module",
   "description": "Widget thời tiết dùng Open-Meteo, kèm API sinh SVG để nhúng vào README",
   "license": "MIT",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "node dev-server.mjs",
     "typecheck": "tsc --noEmit && node scripts/check-config-sync.mjs"
