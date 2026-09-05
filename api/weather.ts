@@ -3,7 +3,7 @@ import {
   DEFAULTS, LAYOUT, CACHE, TEXT, PALETTES, HEAT_SCALE, HEAT_SCALE_DARK,
   resolveOptions, resolvePalette, forecastUrl, monthUrl,
   type Palette, type ResolvedOptions, type Query,
-} from "./config.ts";
+} from "./config.js";
 
 export interface WeatherData {
   current?: {

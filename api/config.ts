@@ -1,12 +1,24 @@
-import shared from "../shared/locations.json" with { type: "json" };
-
 export interface Location {
   name: string;
   latitude: number;
   longitude: number;
 }
 
-export const LOCATIONS: Record<string, Location> = shared.locations;
+// Nguồn dữ liệu thành phố: shared/locations.json. Nhúng thẳng tại đây để hàm
+// serverless không phụ thuộc việc bundler có đóng gói file JSON hay không.
+// scripts/check-config-sync.mjs canh cho khối này + js/config.js khớp JSON.
+const WEEKDAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+
+export const LOCATIONS: Record<string, Location> = {
+  hanoi: { name: "Hà Nội", latitude: 21.0278, longitude: 105.8342 },
+  saigon: { name: "TP. Hồ Chí Minh", latitude: 10.8231, longitude: 106.6297 },
+  danang: { name: "Đà Nẵng", latitude: 16.0678, longitude: 108.2208 },
+  haiphong: { name: "Hải Phòng", latitude: 20.8449, longitude: 106.6881 },
+  hue: { name: "Huế", latitude: 16.4637, longitude: 107.5909 },
+  cantho: { name: "Cần Thơ", latitude: 10.0452, longitude: 105.7469 },
+  dalat: { name: "Đà Lạt", latitude: 11.9404, longitude: 108.4583 },
+  nhatrang: { name: "Nha Trang", latitude: 12.2388, longitude: 109.1967 },
+};
 
 export interface Defaults {
   location: string;
@@ -54,7 +66,7 @@ export const CACHE = {
 };
 
 export const TEXT = {
-  weekdays: shared.weekdays,
+  weekdays: WEEKDAYS,
   now: "Bây giờ",
   today: "Hôm nay",
   hourlyTitle: (city: string) => `Thời tiết ${city} trong 24h tới`,
@@ -62,7 +74,7 @@ export const TEXT = {
   monthTitle: (city: string, month: number, year: number) =>
     `Nhiệt độ ${city} tháng ${month}/${year}`,
   months: ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
-  calendarWeekdays: shared.weekdays,
+  calendarWeekdays: WEEKDAYS,
   legendLess: "Mát",
   legendMore: "Nóng",
   upstreamError: "Open-Meteo trả về lỗi",
