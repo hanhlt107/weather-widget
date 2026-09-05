@@ -6,7 +6,7 @@
   "description": "Widget thời tiết dùng Open-Meteo, kèm API sinh SVG để nhúng vào README",
   "license": "MIT",
   "engines": {
-    "node": "22.x"
+    "node": ">=18"
   },
   "scripts": {
     "dev": "node dev-server.mjs",
