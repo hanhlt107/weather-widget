@@ -1,0 +1,13 @@
+{
+  "weekdays": ["CN", "T2", "T3", "T4", "T5", "T6", "T7"],
+  "locations": {
+    "hanoi": { "name": "Hà Nội", "latitude": 21.0278, "longitude": 105.8342 },
+    "saigon": { "name": "TP. Hồ Chí Minh", "latitude": 10.8231, "longitude": 106.6297 },
+    "danang": { "name": "Đà Nẵng", "latitude": 16.0678, "longitude": 108.2208 },
+    "haiphong": { "name": "Hải Phòng", "latitude": 20.8449, "longitude": 106.6881 },
+    "hue": { "name": "Huế", "latitude": 16.4637, "longitude": 107.5909 },
+    "cantho": { "name": "Cần Thơ", "latitude": 10.0452, "longitude": 105.7469 },
+    "dalat": { "name": "Đà Lạt", "latitude": 11.9404, "longitude": 108.4583 },
+    "nhatrang": { "name": "Nha Trang", "latitude": 12.2388, "longitude": 109.1967 }
+  }
+}

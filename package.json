@@ -4,5 +4,14 @@
   "private": true,
   "type": "module",
   "description": "Widget thời tiết dùng Open-Meteo, kèm API sinh SVG để nhúng vào README",
-  "license": "MIT"
+  "license": "MIT",
+  "scripts": {
+    "dev": "node dev-server.mjs",
+    "typecheck": "tsc --noEmit && node scripts/check-config-sync.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@vercel/node": "^5.0.0",
+    "typescript": "^5.7.0"
+  }
 }
