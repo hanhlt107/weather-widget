@@ -1,7 +1,49 @@
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
   DEFAULTS, LAYOUT, CACHE, TEXT, PALETTES, HEAT_SCALE, HEAT_SCALE_DARK,
-  resolveOptions, resolvePalette, forecastUrl, monthUrl
-} from './config.js';
+  resolveOptions, resolvePalette, forecastUrl, monthUrl,
+  type Palette, type ResolvedOptions, type Query,
+} from "./config.ts";
+
+export interface WeatherData {
+  current?: {
+    time: string;
+    is_day: number;
+    weather_code: number;
+    temperature_2m: number;
+  };
+  hourly?: {
+    time: string[];
+    is_day: number[];
+    weather_code: number[];
+    temperature_2m: number[];
+    precipitation_probability: number[];
+  };
+  daily: {
+    time: string[];
+    weather_code: number[];
+    temperature_2m_max: number[];
+    temperature_2m_min?: number[];
+    precipitation_probability_max: number[];
+    precipitation_sum?: number[];
+  };
+  error?: boolean;
+  reason?: string;
+}
+
+interface Section {
+  body: string;
+  width: number;
+  height: number;
+}
+
+interface LocalTime {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+}
 
 const WEEKDAYS = TEXT.weekdays;
 
@@ -11,7 +53,7 @@ const PAD = LAYOUT.padding;
 const HOURS = DEFAULTS.hours;
 const DAYS = DEFAULTS.days;
 
-function groupOf(code) {
+function groupOf(code: number): string {
   if (code === 0) return 'clear';
   if (code === 1 || code === 2) return 'partly';
   if (code === 3) return 'cloudy';
@@ -23,37 +65,37 @@ function groupOf(code) {
   return 'cloudy';
 }
 
-function escapeXml(text) {
+function escapeXml(text: string): string {
   return String(text).replace(/[&<>"']/g, (ch) => (
-    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[ch]
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' } as Record<string, string>)[ch]
   ));
 }
 
-function pad2(n) {
+function pad2(n: number): string {
   return n < 10 ? '0' + n : String(n);
 }
 
-function todayStr() {
+function todayStr(): string {
   const d = new Date();
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
-function parseLocalTime(text) {
+function parseLocalTime(text: string): LocalTime | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(text || '');
   if (!m) return null;
   return { year: +m[1], month: +m[2], day: +m[3], hour: +m[4], minute: +m[5] };
 }
 
-function weekdayOf(year, month, day) {
+function weekdayOf(year: number, month: number, day: number): number {
   const t = [0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4];
   let y = year;
   if (month < 3) y -= 1;
   return (y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) + t[month - 1] + day) % 7;
 }
 
-function icon(code, isDay, cx, cy) {
+function icon(code: number, isDay: boolean, cx: number, cy: number): string {
   const group = groupOf(code);
-  const g = (body) => `<g transform="translate(${cx - 12} ${cy - 13})">${body}</g>`;
+  const g = (body: string) => `<g transform="translate(${cx - 12} ${cy - 13})">${body}</g>`;
 
   const SUN = `<circle cx="12" cy="12" r="4.2" fill="var(--sun)"/>
     <g stroke="var(--sun)" stroke-width="1.8" stroke-linecap="round">
@@ -95,7 +137,7 @@ function icon(code, isDay, cx, cy) {
   }
 }
 
-function card(x, y, label, sub, code, isDay, pop, temp, highlight) {
+function card(x: number, y: number, label: string, sub: string, code: number, isDay: boolean, pop: number | null, temp: number, highlight: boolean): string {
   const wet = pop != null && pop >= 30;
 
   return `<g>
@@ -107,7 +149,7 @@ function card(x, y, label, sub, code, isDay, pop, temp, highlight) {
   </g>`;
 }
 
-function pin(x, y) {
+function pin(x: number, y: number): string {
   return `<g transform="translate(${x} ${y})">
     <circle cx="0" cy="0" r="11" fill="none" stroke="var(--pin-line)" stroke-width="1"/>
     <g transform="translate(-6 -6.5)" fill="none" stroke="var(--pin)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -117,34 +159,36 @@ function pin(x, y) {
   </g>`;
 }
 
-function section(title, y, cards, showPin, showTitle, titleClass = 'title') {
+function section(title: string, y: number, cards: Section, showPin: boolean, showTitle: boolean, titleClass = 'title'): string {
   const pinY = showTitle ? y - 5 : y + 12;
   return `${showTitle ? `<text x="${PAD}" y="${y}" class="${titleClass}">${escapeXml(title)}</text>` : ''}
     ${showPin ? pin(PAD + cards.width - 16, pinY) : ''}
     ${cards.body}`;
 }
 
-function buildHourly(data, originY) {
-  const nowKey = data.current.time.slice(0, 13);
-  let start = data.hourly.time.findIndex((t) => t.slice(0, 13) >= nowKey);
+function buildHourly(data: WeatherData, originY: number): Section {
+  const current = data.current!;
+  const hourly = data.hourly!;
+  const nowKey = current.time.slice(0, 13);
+  let start = hourly.time.findIndex((t) => t.slice(0, 13) >= nowKey);
   if (start < 0) start = 0;
 
   let body = '';
   for (let i = 0; i < HOURS; i++) {
     const idx = start + i;
-    if (idx >= data.hourly.time.length) break;
+    if (idx >= hourly.time.length) break;
 
-    const t = parseLocalTime(data.hourly.time[idx]);
+    const t = parseLocalTime(hourly.time[idx])!;
     const x = PAD + i * (CARD_W + GAP);
     const isNow = i === 0;
     body += card(
       x, originY + 16,
       isNow ? TEXT.now : pad2(t.hour) + ':' + pad2(t.minute),
       '',
-      isNow ? data.current.weather_code : data.hourly.weather_code[idx],
-      isNow ? data.current.is_day === 1 : data.hourly.is_day[idx] === 1,
-      data.hourly.precipitation_probability[idx],
-      Math.round(isNow ? data.current.temperature_2m : data.hourly.temperature_2m[idx]),
+      isNow ? current.weather_code : hourly.weather_code[idx],
+      isNow ? current.is_day === 1 : hourly.is_day[idx] === 1,
+      hourly.precipitation_probability[idx],
+      Math.round(isNow ? current.temperature_2m : hourly.temperature_2m[idx]),
       isNow
     );
   }
@@ -152,19 +196,20 @@ function buildHourly(data, originY) {
   return { body, width: HOURS * (CARD_W + GAP) - GAP, height: LAYOUT.hourlyPanelHeight };
 }
 
-function buildDaily(data, originY) {
+function buildDaily(data: WeatherData, originY: number): Section {
+  const daily = data.daily;
   let body = '';
-  for (let i = 0; i < DAYS && i < data.daily.time.length; i++) {
-    const t = parseLocalTime(data.daily.time[i] + 'T00:00');
+  for (let i = 0; i < DAYS && i < daily.time.length; i++) {
+    const t = parseLocalTime(daily.time[i] + 'T00:00')!;
     const x = PAD + i * (CARD_W + GAP);
     body += card(
       x, originY + 16,
       i === 0 ? TEXT.today : WEEKDAYS[weekdayOf(t.year, t.month, t.day)],
       pad2(t.day) + '/' + pad2(t.month),
-      data.daily.weather_code[i],
+      daily.weather_code[i],
       true,
-      data.daily.precipitation_probability_max[i],
-      Math.round(data.daily.temperature_2m_max[i]),
+      daily.precipitation_probability_max[i],
+      Math.round(daily.temperature_2m_max[i]),
       i === 0
     );
   }
@@ -172,7 +217,9 @@ function buildDaily(data, originY) {
   return { body, width: DAYS * (CARD_W + GAP) - GAP, height: LAYOUT.dailyPanelHeight };
 }
 
-function smoothPath(pts) {
+interface Pt { x: number; y: number; v?: number; }
+
+function smoothPath(pts: Pt[]): string {
   if (pts.length < 2) return pts.length ? `M${pts[0].x} ${pts[0].y}` : '';
   let d = `M${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
   for (let i = 0; i < pts.length - 1; i++) {
@@ -189,19 +236,19 @@ function smoothPath(pts) {
   return d;
 }
 
-function niceTicks(min, max, count) {
+function niceTicks(min: number, max: number, count: number): number[] {
   const raw = (max - min) / count;
   const mag = Math.pow(10, Math.floor(Math.log10(raw)));
   const norm = raw / mag;
   const step = (norm >= 5 ? 10 : norm >= 2 ? 5 : norm >= 1 ? 2 : 1) * mag;
-  const ticks = [];
+  const ticks: number[] = [];
   for (let v = Math.ceil(min / step) * step; v <= max + 1e-6; v += step) ticks.push(Math.round(v));
   return ticks;
 }
 
-function buildChart(data, originY, chartWidth, unit) {
+function buildChart(data: WeatherData, originY: number, chartWidth: number, unit: string): Section {
   const n = data.daily.time.length;
-  const highs = [];
+  const highs: number[] = [];
   for (let i = 0; i < n; i++) highs.push(Math.round(data.daily.temperature_2m_max[i]));
 
   const rain = data.daily.precipitation_sum
@@ -225,10 +272,10 @@ function buildChart(data, originY, chartWidth, unit) {
   max += pad;
 
   const stepX = n > 1 ? plotW / (n - 1) : 0;
-  const xAt = (i) => left + i * stepX;
-  const yAt = (v) => top + plotH - ((v - min) / (max - min)) * plotH;
+  const xAt = (i: number) => left + i * stepX;
+  const yAt = (v: number) => top + plotH - ((v - min) / (max - min)) * plotH;
 
-  const pts = highs.map((v, i) => ({ x: xAt(i), y: yAt(v), v }));
+  const pts: Pt[] = highs.map((v, i) => ({ x: xAt(i), y: yAt(v), v }));
 
   const ticks = niceTicks(min, max, 4);
   let grid = '';
@@ -266,10 +313,10 @@ function buildChart(data, originY, chartWidth, unit) {
   let dots = '';
   let xLabels = '';
   let todayMark = '';
-  const monthShort = TEXT.months[parseLocalTime(data.daily.time[0] + 'T00:00').month - 1];
+  const monthShort = TEXT.months[parseLocalTime(data.daily.time[0] + 'T00:00')!.month - 1];
   for (let i = 0; i < n; i++) {
     const p = pts[i];
-    const t = parseLocalTime(data.daily.time[i] + 'T00:00');
+    const t = parseLocalTime(data.daily.time[i] + 'T00:00')!;
     const isToday = data.daily.time[i] === today;
     // Native SVG tooltip: shows day + temperature (and rain if any) on hover where the host allows it.
     const tip = `${t.day}/${monthShort}: ${p.v}°${rain[i] > 0 ? ` · ${rain[i]}mm` : ''}`;
@@ -303,12 +350,12 @@ function buildChart(data, originY, chartWidth, unit) {
 }
 
 // Quantize a 0..1 value into a discrete GitHub-style level (0 = coolest .. levels-1 = hottest)
-function heatLevel(t, levels) {
+function heatLevel(t: number, levels: number): number {
   const clamped = Math.max(0, Math.min(1, t));
   return Math.min(levels - 1, Math.floor(clamped * levels));
 }
 
-function buildCalendar(data, originY, night) {
+function buildCalendar(data: WeatherData, originY: number, night: boolean): Section {
   const CW = LAYOUT.cellSize;
   const CG = LAYOUT.cellGap;
   const cols = 7;
@@ -317,7 +364,7 @@ function buildCalendar(data, originY, night) {
   const scale = night ? HEAT_SCALE_DARK : HEAT_SCALE;
   const levels = scale.length;
 
-  const first = parseLocalTime(data.daily.time[0] + 'T00:00');
+  const first = parseLocalTime(data.daily.time[0] + 'T00:00')!;
   const firstDow = weekdayOf(first.year, first.month, first.day);
 
   const highs = data.daily.temperature_2m_max.map((v) => Math.round(v));
@@ -341,13 +388,13 @@ function buildCalendar(data, originY, night) {
   const n = data.daily.time.length;
 
   // On a GitHub-style scale the top two levels are dark enough to need light text.
-  const isDarkFill = (lvl) => (night ? lvl >= 2 : lvl >= 3);
+  const isDarkFill = (lvl: number) => (night ? lvl >= 2 : lvl >= 3);
 
   // Below this size the day number / "Hôm nay" label no longer fits, so cells go
   // GitHub-graph compact: just the temperature centred in the coloured square.
   const compact = CW < 26;
 
-  const drawCell = (x, y, w, day, hi, lvl, isToday) => {
+  const drawCell = (x: number, y: number, w: number, day: number, hi: number, lvl: number, isToday: boolean): string => {
     const cls = isDarkFill(lvl) ? ' hot' : '';
     const r = (0.16 * w).toFixed(1);
     const cx = (x + w / 2).toFixed(1);
@@ -385,7 +432,7 @@ function buildCalendar(data, originY, night) {
 
     const x = PAD + col * (CW + CG);
     const y = gridTop + row * (CW + CG);
-    const t = parseLocalTime(data.daily.time[i] + 'T00:00');
+    const t = parseLocalTime(data.daily.time[i] + 'T00:00')!;
     const lvl = heatLevel((highs[i] - min) / span, levels);
 
     if (data.daily.time[i] === today) {
@@ -426,7 +473,7 @@ function buildCalendar(data, originY, night) {
   return { body: defs + heads + cells + legend, width: gridW, height: (legendY + 6) - originY };
 }
 
-function render(data, opts) {
+function render(data: WeatherData, opts: ResolvedOptions & { city: string; colors: Query }): string {
   const { view, mode, city, theme, colors, hideTitle, hidePin, unit } = opts;
   const chart = mode === 'chart';
   const calendar = mode === 'calendar';
@@ -444,7 +491,7 @@ function render(data, opts) {
 
   if (calendar) {
     const ty = showTitle ? 16 : y;   // compact title sits higher than the default
-    const first = parseLocalTime(data.daily.time[0] + 'T00:00');
+    const first = parseLocalTime(data.daily.time[0] + 'T00:00')!;
     const cal = buildCalendar(data, ty + (showTitle ? 4 : 0), night);
     const title = TEXT.monthTitle(city, first.month, first.year);
     body += section(title, ty, cal, false, showTitle, 'cal-title');
@@ -453,7 +500,7 @@ function render(data, opts) {
   }
 
   if (chart) {
-    const first = parseLocalTime(data.daily.time[0] + 'T00:00');
+    const first = parseLocalTime(data.daily.time[0] + 'T00:00')!;
     const chartWidth = 7 * (48 + 5) - 5; // fixed chart width, independent of calendar cell sizing
     const c = buildChart(data, y, chartWidth, unit);
     const title = TEXT.monthTitle(city, first.month, first.year);
@@ -530,8 +577,9 @@ function render(data, opts) {
 </svg>`;
 }
 
-export default async function handler(req, res) {
-  const { location, view, mode, theme, unit, hideTitle, hidePin } = resolveOptions(req.query || {});
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const query = (req.query || {}) as Query;
+  const { location, view, mode, theme, unit, hideTitle, hidePin } = resolveOptions(query);
 
   try {
     const monthly = mode === 'calendar' || mode === 'chart';
@@ -539,11 +587,11 @@ export default async function handler(req, res) {
     const upstream = await fetch(url);
     if (!upstream.ok) throw new Error('Open-Meteo trả về ' + upstream.status);
 
-    const data = await upstream.json();
+    const data = await upstream.json() as WeatherData;
     if (data.error) throw new Error(data.reason || TEXT.upstreamError);
 
     const svg = render(data, {
-      view, mode, city: location.name, theme, colors: req.query || {}, hideTitle, hidePin, unit
+      location, view, mode, city: location.name, theme, colors: query, hideTitle, hidePin, unit
     });
 
     res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
